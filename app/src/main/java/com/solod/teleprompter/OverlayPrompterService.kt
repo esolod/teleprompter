@@ -45,6 +45,58 @@ class OverlayPrompterService : Service() {
     private lateinit var scrollView: ScrollView
     private lateinit var textScript: TextView
     private lateinit var overlayDot: View
+    private lateinit var overlayTitle: TextView
+    private lateinit var textDiag: TextView
+
+    private var diagVisible = false
+    private var lastLevelDb = -90f
+    private var lastCallbackAt = 0L
+    private var restartCount = 0
+    private var thresholdDbLocal = -30f
+
+    // Iriun Webcam (і подібні "телефон як вебкамера" застосунки) часто
+    // забирають мікрофон собі ексклюзивно, поки активні -- тоді наш
+    // AudioRecord продовжує читати БЕЗ помилки, але отримує тишу (0
+    // семплів). Це неможливо відрізнити від "користувач просто мовчить" за
+    // одним фреймом, тому watchdog реагує тільки на тривалу підозрілу тишу
+    // АБО на явну помилку читання, і пробує перепідключити мікрофон.
+    private val micWatchdogRunnable = object : Runnable {
+        override fun run() {
+            val now = System.currentTimeMillis()
+            val msSinceCallback = now - lastCallbackAt
+            val readError = lastLevelDb <= -99f
+
+            if (diagVisible && ::textDiag.isInitialized) {
+                val src = if (::vad.isInitialized) vad.activeSourceName ?: "?" else "?"
+                textDiag.text = if (readError) {
+                    "ПОМИЛКА ЧИТАННЯ: ${vad.lastError ?: "?"} | джерело: $src | перепідключень: $restartCount"
+                } else {
+                    "рівень: ${lastLevelDb.toInt()}dB поріг: ${thresholdDbLocal.toInt()}dB | джерело: $src | " +
+                        "оновлення ${msSinceCallback}мс тому | перепідключень: $restartCount"
+                }
+            }
+
+            // потік записувача взагалі перестав присилати колбеки -- явно помер
+            val threadDead = lastCallbackAt != 0L && msSinceCallback > 2500L
+            // або читання відверто помиляється (не просто "тихо")
+            val hardError = readError && msSinceCallback < 2500L
+
+            if (threadDead || hardError) {
+                restartMic()
+            }
+
+            mainHandler.postDelayed(this, 500L)
+        }
+    }
+
+    private fun restartMic() {
+        if (!::vad.isInitialized) return
+        restartCount++
+        vad.stop()
+        vad.thresholdDb = thresholdDbLocal
+        vad.start()
+        lastCallbackAt = System.currentTimeMillis()
+    }
 
     private val scrollRunnable = object : Runnable {
         override fun run() {
@@ -122,6 +174,7 @@ class OverlayPrompterService : Service() {
         fontSp = (intent?.getIntExtra(EXTRA_FONT_SP, 20) ?: 20).toFloat()
         speedPxPerSec = intent?.getFloatExtra(EXTRA_SPEED_PX_S, 60f) ?: 60f
         val thresholdDb = intent?.getFloatExtra(EXTRA_THRESHOLD_DB, -30f) ?: -30f
+        thresholdDbLocal = thresholdDb
 
         val inflater = android.view.LayoutInflater.from(this)
         val view = inflater.inflate(R.layout.overlay_prompter, null)
@@ -130,6 +183,8 @@ class OverlayPrompterService : Service() {
         scrollView = view.findViewById(R.id.overlayScrollView)
         textScript = view.findViewById(R.id.overlayTextScript)
         overlayDot = view.findViewById(R.id.overlayDot)
+        overlayTitle = view.findViewById(R.id.overlayTitle)
+        textDiag = view.findViewById(R.id.overlayDiag)
         val header = view.findViewById<View>(R.id.overlayHeader)
         val resizeHandle = view.findViewById<View>(R.id.overlayResizeHandle)
         val btnMinus = view.findViewById<TextView>(R.id.btnFontMinus)
@@ -225,9 +280,21 @@ class OverlayPrompterService : Service() {
         }
         btnClose.setOnClickListener { stopSelf() }
 
-        vad = VoiceActivityDetector { isSpeaking, _ ->
+        // довгий тап по заголовку -- показати/сховати діагностику мікрофона
+        // (корисно, щоб перевірити, чи Iriun Webcam глушить наш запис) і
+        // одразу спробувати форсоване перепідключення мікрофона
+        overlayTitle.setOnLongClickListener {
+            diagVisible = !diagVisible
+            textDiag.visibility = if (diagVisible) View.VISIBLE else View.GONE
+            if (diagVisible) restartMic()
+            true
+        }
+
+        vad = VoiceActivityDetector { isSpeaking, levelDb ->
             mainHandler.post {
                 speaking = isSpeaking
+                lastLevelDb = levelDb
+                lastCallbackAt = System.currentTimeMillis()
                 (overlayDot.background as? android.graphics.drawable.GradientDrawable)?.setColor(
                     if (isSpeaking) 0xFF2ECC71.toInt() else 0xFF888888.toInt()
                 )
@@ -235,14 +302,17 @@ class OverlayPrompterService : Service() {
         }
         vad.thresholdDb = thresholdDb
         vad.start()
+        lastCallbackAt = System.currentTimeMillis()
 
         lastFrameNanos = 0L
         mainHandler.post(scrollRunnable)
+        mainHandler.post(micWatchdogRunnable)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         mainHandler.removeCallbacks(scrollRunnable)
+        mainHandler.removeCallbacks(micWatchdogRunnable)
         if (::vad.isInitialized) vad.stop()
         overlayView?.let {
             try { windowManager.removeView(it) } catch (_: Exception) {}

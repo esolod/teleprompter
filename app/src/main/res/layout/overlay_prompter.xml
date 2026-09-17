@@ -22,6 +22,7 @@
             android:background="@drawable/dot_circle" />
 
         <TextView
+            android:id="@+id/overlayTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -64,6 +65,18 @@
             android:textStyle="bold" />
 
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/overlayDiag"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#88000000"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:text="діагностика..."
+        android:textColor="#FFCC66"
+        android:textSize="11sp"
+        android:visibility="gone" />
 
     <ScrollView
         android:id="@+id/overlayScrollView"
