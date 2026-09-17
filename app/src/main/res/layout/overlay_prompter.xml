@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="#DD000000">
 
-    <!-- Заголовок -- перетягування вікна відбувається дотиком по цій панелі -->
+    <!-- Заголовок — перетягування вікна відбувається дотиком по цій панелі -->
     <LinearLayout
         android:id="@+id/overlayHeader"
         android:layout_width="match_parent"
@@ -81,7 +81,7 @@
             android:lineSpacingMultiplier="1.25" />
     </ScrollView>
 
-    <!-- Ручка зміни розміру -- тягнути за правий нижній кут -->
+    <!-- Ручка зміни розміру — тягнути за правий нижній кут -->
     <View
         android:id="@+id/overlayResizeHandle"
         android:layout_width="28dp"

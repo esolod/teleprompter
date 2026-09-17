@@ -46,7 +46,7 @@
             android:textColor="@color/accent_green"
             android:textSize="14sp" />
 
-        <!-- Діагностика -- прихована за замовчуванням, вмикається довгим
+        <!-- Діагностика — прихована за замовчуванням, вмикається довгим
              тапом по statusу (див. PrompterActivity.textStatus setOnLongClickListener) -->
         <LinearLayout
             android:id="@+id/debugContainer"
