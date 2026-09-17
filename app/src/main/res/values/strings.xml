@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Teleprompter</string>
+    <string name="hint_script">Встав або напиши текст промови…</string>
+    <string name="label_font_size">Розмір шрифту</string>
+    <string name="label_speed">Швидкість прокрутки</string>
+    <string name="label_sensitivity">Чутливість до голосу</string>
+    <string name="label_mirror">Дзеркало (для скла телесуфлера)</string>
+    <string name="btn_calibrate">Калібрувати тишу (2 сек)</string>
+    <string name="btn_start">Старт телесуфлера</string>
+    <string name="calibrating">Калібрування… мовчіть 2 секунди</string>
+    <string name="calibrated">Готово, поріг оновлено</string>
+    <string name="mic_permission_needed">Потрібен дозвіл на мікрофон для голосової прокрутки</string>
+    <string name="status_listening">слухаю…</string>
+    <string name="status_speaking">говорите — скрол</string>
+    <string name="status_silent">тиша — пауза</string>
+    <string name="status_manual_pause">ручна пауза</string>
+</resources>

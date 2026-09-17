@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scrollbars="none">
+
+        <TextView
+            android:id="@+id/textScript"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="32dp"
+            android:paddingTop="400dp"
+            android:paddingBottom="600dp"
+            android:textColor="@color/white"
+            android:lineSpacingMultiplier="1.3" />
+    </ScrollView>
+
+    <!-- center reading guide line -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_gravity="center"
+        android:background="#552ECC71" />
+
+    <TextView
+        android:id="@+id/textStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="16dp"
+        android:background="#88000000"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="6dp"
+        android:text="@string/status_listening"
+        android:textColor="@color/accent_green"
+        android:textSize="14sp" />
+
+    <ImageButton
+        android:id="@+id/btnManualPause"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="#88000000"
+        android:contentDescription="@string/status_manual_pause"
+        android:src="@android:drawable/ic_media_pause" />
+
+</FrameLayout>
