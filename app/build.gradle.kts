@@ -1,7 +1,20 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
+
+// Обчислюється один раз під час конфігурації Gradle -- тобто щоразу, коли CI
+// реально перезбирає проект. Використовується як "відбиток" збірки, щоб на
+// головному екрані додатку можна було візуально підтвердити, що встановлена
+// версія -- це саме той білд, який щойно вийшов з Actions, а не залишок
+// старого кешу/APK.
+val buildTimestamp: String = SimpleDateFormat("yyyy-MM-dd HH:mm").apply {
+    timeZone = TimeZone.getTimeZone("Europe/Madrid")
+}.format(Date())
 
 android {
     namespace = "com.solod.teleprompter"
@@ -13,6 +26,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "BUILD_TIME", "\"$buildTimestamp\"")
     }
 
     signingConfigs {
@@ -50,6 +64,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

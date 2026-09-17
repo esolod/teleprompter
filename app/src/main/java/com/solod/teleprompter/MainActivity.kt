@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchMirror: SwitchCompat
     private lateinit var btnCalibrate: MaterialButton
     private lateinit var btnStart: MaterialButton
+    private lateinit var textVersion: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +35,10 @@ class MainActivity : AppCompatActivity() {
         switchMirror = findViewById(R.id.switchMirror)
         btnCalibrate = findViewById(R.id.btnCalibrate)
         btnStart = findViewById(R.id.btnStart)
+        textVersion = findViewById(R.id.textVersion)
+        // Видно на головному екрані -- дозволяє одразу перевірити, що на
+        // телефоні реально стоїть щойно зібраний APK, а не старий кеш.
+        textVersion.text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})  build: ${BuildConfig.BUILD_TIME}"
 
         editScript.setText(prefs.getString(KEY_SCRIPT, ""))
         seekFont.progress = prefs.getInt(KEY_FONT, 14)

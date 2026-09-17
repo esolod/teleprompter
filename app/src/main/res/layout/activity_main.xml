@@ -113,5 +113,15 @@
             android:text="@string/btn_start"
             android:textSize="18sp" />
 
+        <TextView
+            android:id="@+id/textVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:text="v1.0"
+            android:textColor="#666666"
+            android:textSize="12sp" />
+
     </LinearLayout>
 </ScrollView>
