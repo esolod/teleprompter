@@ -46,29 +46,40 @@
             android:textColor="@color/accent_green"
             android:textSize="14sp" />
 
-        <TextView
-            android:id="@+id/textMicAlive"
+        <!-- Діагностика -- прихована за замовчуванням, вмикається довгим
+             тапом по statusу (див. PrompterActivity.textStatus setOnLongClickListener) -->
+        <LinearLayout
+            android:id="@+id/debugContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="#88000000"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="мікрофон: ..."
-            android:textColor="@color/accent_red"
-            android:textSize="14sp" />
+            android:orientation="vertical"
+            android:visibility="gone">
 
-        <TextView
-            android:id="@+id/textLifecycle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="#88000000"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="6dp"
-            android:text="resumes: 0"
-            android:textColor="#AAAAAA"
-            android:textSize="12sp" />
+            <TextView
+                android:id="@+id/textMicAlive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="#88000000"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="мікрофон: ..."
+                android:textColor="@color/accent_red"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/textLifecycle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:background="#88000000"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="resumes: 0"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

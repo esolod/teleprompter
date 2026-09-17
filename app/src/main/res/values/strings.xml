@@ -14,4 +14,6 @@
     <string name="status_speaking">говорите — скрол</string>
     <string name="status_silent">тиша — пауза</string>
     <string name="status_manual_pause">ручна пауза</string>
+    <string name="btn_overlay">Плаваюче вікно (з Iriun Webcam)</string>
+    <string name="overlay_permission_needed">Потрібен дозвіл "Показ поверх інших додатків" для плаваючого вікна</string>
 </resources>

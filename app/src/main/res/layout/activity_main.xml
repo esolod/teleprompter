@@ -113,6 +113,14 @@
             android:text="@string/btn_start"
             android:textSize="18sp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOverlay"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/btn_overlay" />
+
         <TextView
             android:id="@+id/textVersion"
             android:layout_width="match_parent"

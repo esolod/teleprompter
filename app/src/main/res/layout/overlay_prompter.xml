@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#DD000000">
+
+    <!-- Заголовок -- перетягування вікна відбувається дотиком по цій панелі -->
+    <LinearLayout
+        android:id="@+id/overlayHeader"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="#2ECC71"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="8dp">
+
+        <View
+            android:id="@+id/overlayDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/dot_circle" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Телесуфлер"
+            android:textColor="@color/black"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnFontMinus"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:text="－"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnFontPlus"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:text="＋"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnOverlayClose"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="4dp"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/overlayScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="none">
+
+        <TextView
+            android:id="@+id/overlayTextScript"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:textColor="@color/white"
+            android:lineSpacingMultiplier="1.25" />
+    </ScrollView>
+
+    <!-- Ручка зміни розміру -- тягнути за правий нижній кут -->
+    <View
+        android:id="@+id/overlayResizeHandle"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_gravity="end"
+        android:background="#552ECC71" />
+
+</LinearLayout>

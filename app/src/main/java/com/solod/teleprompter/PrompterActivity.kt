@@ -19,7 +19,10 @@ class PrompterActivity : AppCompatActivity() {
     private lateinit var textStatus: TextView
     private lateinit var textMicAlive: TextView
     private lateinit var textLifecycle: TextView
+    private lateinit var debugContainer: View
     private lateinit var btnManualPause: ImageButton
+
+    private var debugVisible = false
 
     private lateinit var vad: VoiceActivityDetector
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -99,7 +102,19 @@ class PrompterActivity : AppCompatActivity() {
         textStatus = findViewById(R.id.textStatus)
         textMicAlive = findViewById(R.id.textMicAlive)
         textLifecycle = findViewById(R.id.textLifecycle)
+        debugContainer = findViewById(R.id.debugContainer)
         btnManualPause = findViewById(R.id.btnManualPause)
+
+        // Довгий тап по статус-рядку -- показати/сховати діагностику
+        // (рівень dB, живий стан мікрофона, лічильники resume/pause,
+        // обране аудіо-джерело). За замовчуванням прихована, щоб не
+        // заважати під час реального використання.
+        textStatus.setOnLongClickListener {
+            debugVisible = !debugVisible
+            debugContainer.visibility = if (debugVisible) View.VISIBLE else View.GONE
+            updateStatus()
+            true
+        }
 
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
         val fontSp = intent.getIntExtra(EXTRA_FONT_SP, 22)
@@ -143,6 +158,10 @@ class PrompterActivity : AppCompatActivity() {
             manualPause -> getString(R.string.status_manual_pause)
             speaking -> getString(R.string.status_speaking)
             else -> getString(R.string.status_silent)
+        }
+        if (!debugVisible) {
+            textStatus.text = base
+            return
         }
         val levelText = if (lastLevelDb <= -99f) {
             "ПОМИЛКА ЧИТАННЯ: ${vad.lastError ?: "?"}"

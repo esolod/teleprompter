@@ -2,7 +2,10 @@ package com.solod.teleprompter
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
@@ -21,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchMirror: SwitchCompat
     private lateinit var btnCalibrate: MaterialButton
     private lateinit var btnStart: MaterialButton
+    private lateinit var btnOverlay: MaterialButton
     private lateinit var textVersion: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         switchMirror = findViewById(R.id.switchMirror)
         btnCalibrate = findViewById(R.id.btnCalibrate)
         btnStart = findViewById(R.id.btnStart)
+        btnOverlay = findViewById(R.id.btnOverlay)
         textVersion = findViewById(R.id.textVersion)
         // Видно на головному екрані -- дозволяє одразу перевірити, що на
         // телефоні реально стоїть щойно зібраний APK, а не старий кеш.
@@ -48,6 +53,7 @@ class MainActivity : AppCompatActivity() {
 
         btnCalibrate.setOnClickListener { calibrate() }
         btnStart.setOnClickListener { start() }
+        btnOverlay.setOnClickListener { startOverlay() }
     }
 
     private fun sensitivityFromDb(db: Float): Int {
@@ -112,6 +118,61 @@ class MainActivity : AppCompatActivity() {
             putExtra(PrompterActivity.EXTRA_MIRROR, switchMirror.isChecked)
         }
         startActivity(intent)
+    }
+
+    private fun startOverlay() {
+        val text = editScript.text.toString()
+        if (text.isBlank()) {
+            Toast.makeText(this, R.string.hint_script, Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (!hasMicPermission()) {
+            requestMicPermission { startOverlay() }
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Toast.makeText(this, R.string.overlay_permission_needed, Toast.LENGTH_LONG).show()
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")
+            )
+            overlayPermissionLauncher.launch(intent)
+            return
+        }
+        launchOverlayService(text)
+    }
+
+    private fun launchOverlayService(text: String) {
+        prefs.edit()
+            .putString(KEY_SCRIPT, text)
+            .putInt(KEY_FONT, seekFont.progress)
+            .putInt(KEY_SPEED, seekSpeed.progress)
+            .putInt(KEY_SENSITIVITY, seekSensitivity.progress)
+            .putFloat(KEY_THRESHOLD_DB, thresholdFromSensitivity(seekSensitivity.progress))
+            .putBoolean(KEY_MIRROR, switchMirror.isChecked)
+            .apply()
+
+        val fontSp = (seekFont.progress + 8).coerceAtLeast(12)
+        val speedPxPerSec = 20f + (seekSpeed.progress / 100f) * 240f
+        val thresholdDb = thresholdFromSensitivity(seekSensitivity.progress)
+
+        val intent = Intent(this, OverlayPrompterService::class.java).apply {
+            putExtra(OverlayPrompterService.EXTRA_TEXT, text)
+            putExtra(OverlayPrompterService.EXTRA_FONT_SP, fontSp)
+            putExtra(OverlayPrompterService.EXTRA_SPEED_PX_S, speedPxPerSec)
+            putExtra(OverlayPrompterService.EXTRA_THRESHOLD_DB, thresholdDb)
+        }
+        androidx.core.content.ContextCompat.startForegroundService(this, intent)
+    }
+
+    private val overlayPermissionLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
+            launchOverlayService(editScript.text.toString())
+        } else {
+            Toast.makeText(this, R.string.overlay_permission_needed, Toast.LENGTH_LONG).show()
+        }
     }
 
     // ---- permission handling without extra deps ----
