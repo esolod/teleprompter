@@ -106,7 +106,12 @@ class PrompterActivity : AppCompatActivity() {
             speaking -> getString(R.string.status_speaking)
             else -> getString(R.string.status_silent)
         }
-        textStatus.text = "$base  |  рівень: ${lastLevelDb.toInt()}dB  поріг: ${thresholdDbForDisplay.toInt()}dB"
+        val levelText = if (lastLevelDb <= -99f) {
+            "ПОМИЛКА ЧИТАННЯ: ${vad.lastError ?: "?"}"
+        } else {
+            "рівень: ${lastLevelDb.toInt()}dB  поріг: ${thresholdDbForDisplay.toInt()}dB"
+        }
+        textStatus.text = "$base  |  $levelText"
     }
 
     private fun hideSystemBars() {

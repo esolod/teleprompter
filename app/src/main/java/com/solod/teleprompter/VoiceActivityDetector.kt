@@ -86,9 +86,19 @@ class VoiceActivityDetector(
 
         thread = Thread {
             val chunk = ShortArray(SAMPLE_RATE / 25) // ~40ms chunks
+            var consecutiveErrors = 0
             while (running) {
                 val read = record.read(chunk, 0, chunk.size)
-                if (read <= 0) continue
+                if (read <= 0) {
+                    // read() віддає код помилки (від'ємний) або 0 -- показуємо це
+                    // прямо на екрані сентинел-значенням -99, щоб відрізнити
+                    // "справжня тиша" (-90) від "запис узагалі не працює".
+                    consecutiveErrors++
+                    lastError = "AudioRecord.read() = $read (спроба #$consecutiveErrors)"
+                    onStateChanged(speaking, -99f)
+                    continue
+                }
+                consecutiveErrors = 0
 
                 var sum = 0.0
                 for (i in 0 until read) {
