@@ -15,6 +15,19 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Фіксований debug-ключ, закомічений у репо (app/debug.keystore).
+            // Без цього кожен CI-білд підписувався б новим випадковим ключем,
+            // і Android відмовлявся б ставити APK поверх попередньої версії
+            // ("App not installed" через конфлікт підпису).
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -22,6 +35,7 @@ android {
         }
         debug {
             isDebuggable = true
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
