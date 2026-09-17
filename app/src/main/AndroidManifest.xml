@@ -34,7 +34,7 @@
             android:theme="@style/Theme.Teleprompter.Fullscreen" />
 
         <!-- Плаваюче вікно телесуфлера поверх інших додатків (наприклад,
-             Iriun Webcam) -- працює як foreground-сервіс з overlay-вікном. -->
+             Iriun Webcam) — працює як foreground-сервіс з overlay-вікном. -->
         <service
             android:name=".OverlayPrompterService"
             android:exported="false"
