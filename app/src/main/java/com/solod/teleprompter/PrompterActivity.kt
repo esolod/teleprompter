@@ -17,6 +17,8 @@ class PrompterActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var textScript: TextView
     private lateinit var textStatus: TextView
+    private lateinit var textMicAlive: TextView
+    private lateinit var textLifecycle: TextView
     private lateinit var btnManualPause: ImageButton
 
     private lateinit var vad: VoiceActivityDetector
@@ -30,6 +32,14 @@ class PrompterActivity : AppCompatActivity() {
 
     private var lastLevelDb: Float = -90f
     private var thresholdDbForDisplay: Float = -30f
+
+    // Останній раз, коли реально прийшли дані з потоку мікрофона (System.currentTimeMillis()).
+    // Якщо це число не оновлюється -> запис фактично стоїть, навіть якщо
+    // formally vad.start() один раз повернув true.
+    @Volatile private var lastAudioDataAt: Long = 0L
+
+    private var resumeCount = 0
+    private var pauseCount = 0
 
     private val scrollRunnable = object : Runnable {
         override fun run() {
@@ -50,6 +60,29 @@ class PrompterActivity : AppCompatActivity() {
         }
     }
 
+    // Окремий "сторож": кожні 300мс перевіряє, чи прийшли свіжі дані з
+    // мікрофона за останні 500мс. Так видно живий стан запису незалежно
+    // від того, "говорить" зараз людина чи ні.
+    private val micWatchdogRunnable = object : Runnable {
+        override fun run() {
+            val ageMs = System.currentTimeMillis() - lastAudioDataAt
+            val alive = lastAudioDataAt != 0L && ageMs < 500
+            textMicAlive.text = if (alive) {
+                "мікрофон: ПИШЕ (оновлення ${ageMs}мс тому)"
+            } else if (lastAudioDataAt == 0L) {
+                "мікрофон: ще не було жодного семпла"
+            } else {
+                "мікрофон: МОВЧИТЬ вже ${ageMs}мс -- запис зупинився!"
+            }
+            textMicAlive.setTextColor(
+                if (alive) resources.getColor(R.color.accent_green, theme)
+                else resources.getColor(R.color.accent_red, theme)
+            )
+            textLifecycle.text = "resumes: $resumeCount   pauses: $pauseCount"
+            mainHandler.postDelayed(this, 300L)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(
@@ -62,6 +95,8 @@ class PrompterActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         textScript = findViewById(R.id.textScript)
         textStatus = findViewById(R.id.textStatus)
+        textMicAlive = findViewById(R.id.textMicAlive)
+        textLifecycle = findViewById(R.id.textLifecycle)
         btnManualPause = findViewById(R.id.btnManualPause)
 
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
@@ -90,6 +125,7 @@ class PrompterActivity : AppCompatActivity() {
         }
 
         vad = VoiceActivityDetector { isSpeaking, levelDb ->
+            lastAudioDataAt = System.currentTimeMillis()
             mainHandler.post {
                 speaking = isSpeaking
                 lastLevelDb = levelDb
@@ -137,8 +173,10 @@ class PrompterActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        resumeCount++
         lastFrameNanos = 0L
         mainHandler.post(scrollRunnable)
+        mainHandler.post(micWatchdogRunnable)
         val ok = vad.start()
         if (!ok) {
             android.widget.Toast.makeText(
@@ -152,7 +190,9 @@ class PrompterActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        pauseCount++
         mainHandler.removeCallbacks(scrollRunnable)
+        mainHandler.removeCallbacks(micWatchdogRunnable)
         vad.stop()
     }
 
