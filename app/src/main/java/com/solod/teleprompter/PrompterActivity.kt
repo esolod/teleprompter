@@ -78,7 +78,9 @@ class PrompterActivity : AppCompatActivity() {
                 if (alive) resources.getColor(R.color.accent_green, theme)
                 else resources.getColor(R.color.accent_red, theme)
             )
-            textLifecycle.text = "resumes: $resumeCount   pauses: $pauseCount"
+            val sourceInfo = vad.activeSourceName ?: "?"
+            val probeNote = vad.lastError?.takeIf { it.contains("Проби:") } ?: ""
+            textLifecycle.text = "resumes: $resumeCount pauses: $pauseCount джерело: $sourceInfo\n$probeNote"
             mainHandler.postDelayed(this, 300L)
         }
     }
