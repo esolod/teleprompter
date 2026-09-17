@@ -36,24 +36,53 @@ class VoiceActivityDetector(
     @Volatile private var speaking = false
     private var lastVoiceAt = 0L
 
+    @Volatile var lastError: String? = null
+        private set
+
+    /** true, якщо запис реально стартував. false -> дивись [lastError]. */
     @SuppressLint("MissingPermission")
-    fun start() {
-        if (running) return
+    fun start(): Boolean {
+        if (running) return true
+        lastError = null
         val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
-        if (minBuf <= 0) return
+        if (minBuf <= 0) {
+            lastError = "getMinBufferSize повернув $minBuf — пристрій не підтримує 16kHz mono PCM16"
+            return false
+        }
         val bufferSize = minBuf * 2
 
-        val record = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION,
-            SAMPLE_RATE, CHANNEL, ENCODING, bufferSize
-        )
+        val record = try {
+            AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE, CHANNEL, ENCODING, bufferSize
+            )
+        } catch (e: SecurityException) {
+            lastError = "Немає дозволу RECORD_AUDIO: ${e.message}"
+            return false
+        }
         if (record.state != AudioRecord.STATE_INITIALIZED) {
+            lastError = "AudioRecord не ініціалізувався (state=${record.state}) — мікрофон зайнятий іншим додатком?"
             record.release()
-            return
+            return false
         }
         audioRecord = record
         running = true
-        record.startRecording()
+        try {
+            record.startRecording()
+        } catch (e: Exception) {
+            lastError = "startRecording() впав: ${e.message}"
+            running = false
+            record.release()
+            audioRecord = null
+            return false
+        }
+        if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+            lastError = "startRecording() пройшов, але recordingState != RECORDING"
+            running = false
+            record.release()
+            audioRecord = null
+            return false
+        }
 
         thread = Thread {
             val chunk = ShortArray(SAMPLE_RATE / 25) // ~40ms chunks
@@ -72,20 +101,20 @@ class VoiceActivityDetector(
                 val now = System.currentTimeMillis()
                 if (db > thresholdDb) {
                     lastVoiceAt = now
-                    if (!speaking) {
-                        speaking = true
-                        onStateChanged(true, db)
-                    }
+                    if (!speaking) speaking = true
                 } else if (speaking && now - lastVoiceAt > hangoverMs) {
                     speaking = false
-                    onStateChanged(false, db)
                 }
+                // кожен чанк (~40мс) — щоб на екрані був живий індикатор рівня,
+                // а не тільки в момент переходу тиша/мова
+                onStateChanged(speaking, db)
             }
         }.apply {
             name = "vad-thread"
             isDaemon = true
             start()
         }
+        return true
     }
 
     /** Синхронно записує [durationMs] мс тиші і повертає рекомендований поріг у dB. */
@@ -94,7 +123,7 @@ class VoiceActivityDetector(
         val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
         if (minBuf <= 0) return thresholdDb
         val record = AudioRecord(
-            MediaRecorder.AudioSource.VOICE_RECOGNITION,
+            MediaRecorder.AudioSource.MIC,
             SAMPLE_RATE, CHANNEL, ENCODING, minBuf * 2
         )
         if (record.state != AudioRecord.STATE_INITIALIZED) {

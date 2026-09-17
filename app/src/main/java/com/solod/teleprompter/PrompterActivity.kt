@@ -28,6 +28,9 @@ class PrompterActivity : AppCompatActivity() {
     private var pixelAccumulator = 0f
     private var lastFrameNanos = 0L
 
+    private var lastLevelDb: Float = -90f
+    private var thresholdDbForDisplay: Float = -30f
+
     private val scrollRunnable = object : Runnable {
         override fun run() {
             val now = System.nanoTime()
@@ -86,21 +89,24 @@ class PrompterActivity : AppCompatActivity() {
             updateStatus()
         }
 
-        vad = VoiceActivityDetector { isSpeaking, _ ->
+        vad = VoiceActivityDetector { isSpeaking, levelDb ->
             mainHandler.post {
                 speaking = isSpeaking
+                lastLevelDb = levelDb
                 updateStatus()
             }
         }
         vad.thresholdDb = thresholdDb
+        thresholdDbForDisplay = thresholdDb
     }
 
     private fun updateStatus() {
-        textStatus.text = when {
+        val base = when {
             manualPause -> getString(R.string.status_manual_pause)
             speaking -> getString(R.string.status_speaking)
             else -> getString(R.string.status_silent)
         }
+        textStatus.text = "$base  |  рівень: ${lastLevelDb.toInt()}dB  поріг: ${thresholdDbForDisplay.toInt()}dB"
     }
 
     private fun hideSystemBars() {
@@ -128,7 +134,14 @@ class PrompterActivity : AppCompatActivity() {
         super.onResume()
         lastFrameNanos = 0L
         mainHandler.post(scrollRunnable)
-        vad.start()
+        val ok = vad.start()
+        if (!ok) {
+            android.widget.Toast.makeText(
+                this,
+                "Мікрофон не запустився: ${vad.lastError}",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
         updateStatus()
     }
 
